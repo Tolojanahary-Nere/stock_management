@@ -7,14 +7,45 @@ from database import (
     add_user, update_user
 )
 
+# Style commun pour les forms
+FORM_STYLE = """
+    QDialog {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #34495e, stop:1 #2c3e50);
+    }
+    QLabel {
+        color: #bdc3c7;
+        font-size: 14px;
+    }
+    QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+        background-color: #2c3e50;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        padding: 8px;
+        color: white;
+    }
+    QPushButton {
+        background-color: #3498db;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+    }
+    QPushButton:hover {
+        background-color: #2980b9;
+    }
+"""
+
 # ------------------ PRODUCT FORM ------------------
 class ProductForm(QDialog):
     saved = Signal()  # signal émis après CRUD
     def __init__(self, parent=None, product=None, user_id=None):
         super().__init__(parent)
+        self.main_parent = parent  # Stocké correctement
         self.user_id = user_id
         self.setWindowTitle("Ajouter/Modifier Produit")
         self.setFixedSize(400, 300)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.nom_input = QLineEdit(product['nom'] if product else '')
@@ -60,17 +91,20 @@ class ProductForm(QDialog):
             update_product(str(self.product_id), data)
         else:
             add_product(data)
-        self.saved.emit()  # ← signal pour notifier MainWindow
+        self.main_parent.refresh_dashboard()  # Refresh dashboard
+        self.saved.emit()  # Signal pour notifier MainWindow
         self.accept()
 
 # ------------------ ENTRY FORM ------------------
 class EntryForm(QDialog):
     saved = Signal()
-    def __init__(self, parent=None, user_id=None):
+    def __init__(self, parent=None, item_data=None, user_id=None):
         super().__init__(parent)
+        self.main_parent = parent
         self.user_id = user_id
         self.setWindowTitle("Nouvelle Entrée")
         self.setFixedSize(400, 300)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.prod_combo = QComboBox()
@@ -118,6 +152,7 @@ class EntryForm(QDialog):
         }
         try:
             add_entry(data)
+            self.main_parent.refresh_dashboard()  # Refresh dashboard
             self.saved.emit()
             self.accept()
         except ValueError as e:
@@ -126,11 +161,13 @@ class EntryForm(QDialog):
 # ------------------ EXIT FORM ------------------
 class ExitForm(QDialog):
     saved = Signal()
-    def __init__(self, parent=None, user_id=None):
+    def __init__(self, parent=None, item_data=None, user_id=None):
         super().__init__(parent)
+        self.main_parent = parent
         self.user_id = user_id
         self.setWindowTitle("Nouvelle Sortie")
         self.setFixedSize(400, 250)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.prod_combo = QComboBox()
@@ -166,6 +203,7 @@ class ExitForm(QDialog):
         }
         try:
             add_exit(data)
+            self.main_parent.refresh_dashboard()  # Refresh dashboard
             self.saved.emit()
             self.accept()
         except ValueError as e:
@@ -176,9 +214,11 @@ class SupplierForm(QDialog):
     saved = Signal()
     def __init__(self, parent=None, supplier=None, user_id=None):
         super().__init__(parent)
+        self.main_parent = parent
         self.user_id = user_id
         self.setWindowTitle("Ajouter/Modifier Fournisseur")
         self.setFixedSize(400, 300)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.nom_input = QLineEdit(supplier['nom_fournisseur'] if supplier else '')
@@ -209,6 +249,7 @@ class SupplierForm(QDialog):
             update_supplier(str(self.supplier_id), data)
         else:
             add_supplier(data)
+        self.main_parent.refresh_dashboard()  # Refresh dashboard
         self.saved.emit()
         self.accept()
 
@@ -217,9 +258,11 @@ class CategoryForm(QDialog):
     saved = Signal()
     def __init__(self, parent=None, category=None, user_id=None):
         super().__init__(parent)
+        self.main_parent = parent
         self.user_id = user_id
         self.setWindowTitle("Ajouter/Modifier Catégorie")
         self.setFixedSize(300, 200)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.nom_input = QLineEdit(category['nom_categorie'] if category else '')
@@ -244,6 +287,7 @@ class CategoryForm(QDialog):
             update_category(str(self.category_id), data)
         else:
             add_category(data)
+        self.main_parent.refresh_dashboard()  # Refresh dashboard
         self.saved.emit()
         self.accept()
 
@@ -252,9 +296,11 @@ class UserForm(QDialog):
     saved = Signal()
     def __init__(self, parent=None, user=None, current_user_id=None):
         super().__init__(parent)
+        self.main_parent = parent
         self.current_user_id = current_user_id  # Pour éviter de se supprimer soi-même
         self.setWindowTitle("Ajouter/Modifier Utilisateur")
         self.setFixedSize(400, 350)
+        self.setStyleSheet(FORM_STYLE)
         layout = QFormLayout()
         
         self.nom_input = QLineEdit(user['nom'] if user else '')
@@ -302,5 +348,6 @@ class UserForm(QDialog):
             update_user(str(self.user_id), data)
         else:
             add_user(data)
+        self.main_parent.refresh_dashboard()  # Refresh dashboard
         self.saved.emit()
         self.accept()

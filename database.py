@@ -140,6 +140,30 @@ def add_exit(data: dict):
     log_action('Sortie stock', data['produit_id'], f"Quantité: {data['quantite_sortie']}")
     return result.inserted_id
 
+def delete_entry(entry_id):
+    """Supprime une entrée de stock"""
+    entry = DB['entrees_stock'].find_one({'_id': ObjectId(entry_id)})
+    if not entry:
+        raise ValueError("Entrée introuvable")
+    DB['produits'].update_one(
+        {'_id': ObjectId(entry['produit_id'])},
+        {'$inc': {'quantite_stock': -entry['quantite_entree']}}
+    )
+    DB['entrees_stock'].delete_one({'_id': ObjectId(entry_id)})
+    log_action('Suppression entrée', entry['produit_id'], 'Entrée supprimée')
+
+def delete_exit(exit_id):
+    """Supprime une sortie de stock"""
+    exit_record = DB['sorties_stock'].find_one({'_id': ObjectId(exit_id)})
+    if not exit_record:
+        raise ValueError("Sortie introuvable")
+    DB['produits'].update_one(
+        {'_id': ObjectId(exit_record['produit_id'])},
+        {'$inc': {'quantite_stock': exit_record['quantite_sortie']}}
+    )
+    DB['sorties_stock'].delete_one({'_id': ObjectId(exit_id)})
+    log_action('Suppression sortie', exit_record['produit_id'], 'Sortie supprimée')
+
 def get_all_entries():
     return list(DB['entrees_stock'].find())
 
@@ -162,6 +186,11 @@ def log_action(action: str, produit_id=None, details: str='', user_id=None):
 def get_history(filters=None):
     query = filters or {}
     return list(DB['historique'].find(query).sort('date_action', -1))
+
+def delete_history(history_id):
+    """Supprime une entrée d'historique"""
+    DB['historique'].delete_one({'_id': ObjectId(history_id)})
+    log_action('Suppression historique', None, 'Entrée d\'historique supprimée')
 
 # -----------------------------
 # Tableau de bord / KPI
